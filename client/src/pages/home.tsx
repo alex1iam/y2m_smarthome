@@ -98,7 +98,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Home className="text-primary text-2xl" />
-              <h1 className="text-xl font-semibold text-gray-900">yandex2mqtt config manager</h1>
+              <h1 className="text-xl font-semibold text-gray-900">YANDEX2MQTT CONFIG MANAGER</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button 
