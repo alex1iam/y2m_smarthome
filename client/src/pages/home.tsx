@@ -148,22 +148,6 @@ export default function HomePage() {
         <aside className="w-64 bg-white shadow-sm h-screen fixed left-0 top-20 overflow-y-auto">
           <nav className="p-4">
             <div className="space-y-2">
-              <a href="#devices" className="flex items-center space-x-3 text-gray-700 p-3 rounded-lg bg-blue-50 text-primary">
-                <i className="fas fa-lightbulb"></i>
-                <span className="font-medium">Устройства</span>
-              </a>
-              <a href="#rooms" className="flex items-center space-x-3 text-gray-700 p-3 rounded-lg hover:bg-gray-50">
-                <DoorOpen className="h-4 w-4" />
-                <span>Комнаты</span>
-              </a>
-              <a href="#mqtt" className="flex items-center space-x-3 text-gray-700 p-3 rounded-lg hover:bg-gray-50">
-                <i className="fas fa-network-wired"></i>
-                <span>MQTT настройки</span>
-              </a>
-              <a href="#export" className="flex items-center space-x-3 text-gray-700 p-3 rounded-lg hover:bg-gray-50">
-                <i className="fas fa-file-export"></i>
-                <span>Экспорт конфигурации</span>
-              </a>
             </div>
 
             {/* Room Filter */}
