@@ -39,7 +39,6 @@ export class MemStorage implements IStorage {
       this.appSettings = JSON.parse(settingsContent);
       this.configPath = this.appSettings.devicesFilePath;
     } catch (error) {
-      // Use default settings if file doesn't exist
       console.log('Using default app settings');
     }
   }
@@ -57,27 +56,22 @@ export class MemStorage implements IStorage {
     try {
       let configContent: string;
       try {
-        // Try to read the main config file
         configContent = await fs.readFile(this.configPath, 'utf-8');
       } catch {
-        // Fallback to uploaded config if main file doesn't exist
         const uploadedConfigPath = path.join(process.cwd(), 'attached_assets', 'Pasted-module-exports-mqtt-host-localhost-port-1883-user-alex1ia-1753588228601_1753588228603.txt');
         configContent = await fs.readFile(uploadedConfigPath, 'utf-8');
       }
 
-      // Parse the module.exports format
       const configStart = configContent.indexOf('module.exports = {');
       if (configStart !== -1) {
         const configCode = configContent.substring(configStart);
         const configEnd = this.findMatchingBrace(configCode, configCode.indexOf('{'));
         const configObject = configCode.substring(0, configEnd + 1);
-        
-        // Use eval to parse the configuration (in production, use a proper JS parser)
+
         const moduleExports = {};
         eval(configObject.replace('module.exports = ', 'moduleExports.config = '));
         this.configuration = (moduleExports as any).config;
-        
-        // Load devices into memory
+
         if (this.configuration?.devices) {
           this.configuration.devices.forEach(device => {
             this.devices.set(device.id, device);
@@ -86,7 +80,6 @@ export class MemStorage implements IStorage {
       }
     } catch (error) {
       console.error('Failed to load configuration:', error);
-      // Initialize with empty configuration
       this.configuration = {
         mqtt: { host: 'localhost', port: 1883, user: '', password: '' },
         https: { privateKey: '', certificate: '', port: 443 },
@@ -119,38 +112,38 @@ export class MemStorage implements IStorage {
     const id = `id_device_${randomUUID().substring(0, 8)}`;
     const device: Device = { ...insertDevice, id };
     this.devices.set(id, device);
-    
-    // Update configuration
+
     if (this.configuration) {
       this.configuration.devices = Array.from(this.devices.values());
+      await this.saveConfiguration(this.configuration);
     }
-    
+
     return device;
   }
 
   async updateDevice(id: string, updates: Partial<Device>): Promise<Device | undefined> {
     const device = this.devices.get(id);
     if (!device) return undefined;
-    
+
     const updatedDevice = { ...device, ...updates, id };
     this.devices.set(id, updatedDevice);
-    
-    // Update configuration
+
     if (this.configuration) {
       this.configuration.devices = Array.from(this.devices.values());
+      await this.saveConfiguration(this.configuration);
     }
-    
+
     return updatedDevice;
   }
 
   async deleteDevice(id: string): Promise<boolean> {
     const deleted = this.devices.delete(id);
-    
-    // Update configuration
+
     if (this.configuration && deleted) {
       this.configuration.devices = Array.from(this.devices.values());
+      await this.saveConfiguration(this.configuration);
     }
-    
+
     return deleted;
   }
 
@@ -163,25 +156,21 @@ export class MemStorage implements IStorage {
 
   async saveConfiguration(config: Configuration): Promise<void> {
     this.configuration = config;
-    
-    // Update devices map
+
     this.devices.clear();
     config.devices.forEach(device => {
       this.devices.set(device.id, device);
     });
 
-    // Save to file
     const configString = this.generateConfigString(config);
     try {
       await fs.mkdir(path.dirname(this.configPath), { recursive: true });
-    } catch (error) {
-      // Directory might already exist, ignore error
-    }
+    } catch {}
     await fs.writeFile(this.configPath, configString, 'utf-8');
   }
 
   private generateConfigString(config: Configuration): string {
-    return `module.exports = ${JSON.stringify(config, null, 4).replace(/"([^"]+)":/g, '$1:')};`;
+    return `module.exports = ${JSON.stringify(config, null, 4).replace(/"([^\"]+)":/g, '$1:')};`;
   }
 
   async getRooms(): Promise<string[]> {
@@ -196,14 +185,12 @@ export class MemStorage implements IStorage {
 
   async updateAppSettings(settings: UpdateAppSettings): Promise<AppSettings> {
     this.appSettings = { ...this.appSettings, ...settings };
-    
-    // Update config path if it changed
+
     if (settings.devicesFilePath) {
       this.configPath = settings.devicesFilePath;
-      // Reload configuration from new path
       await this.loadConfiguration();
     }
-    
+
     await this.saveAppSettings();
     return this.appSettings;
   }
